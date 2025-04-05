@@ -11,7 +11,8 @@ RUN git clone https://github.com/sherlock-project/sherlock.git
 
 # Install Sherlock requirements
 WORKDIR /app/sherlock
-RUN pip install -r requirements.txt
+RUN pip install -r /app/sherlock/requirements.txt
+
 
 # Move back to app folder
 WORKDIR /app
