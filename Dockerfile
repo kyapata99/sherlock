@@ -1,31 +1,29 @@
-# Release instructions:
-  # 1. Update the version tag in the Dockerfile to match the version in sherlock/__init__.py
-  # 2. Update the VCS_REF tag to match the tagged version's FULL commit hash
-  # 3. Build image with BOTH latest and version tags
-    # i.e. `docker build -t sherlock/sherlock:0.15.0 -t sherlock/sherlock:latest .`
+FROM python:3.11-slim
 
-FROM python:3.12-slim-bullseye as build
-WORKDIR /sherlock
+# Install required system packages
+RUN apt-get update && apt-get install -y git python3-pip
 
-RUN pip3 install --no-cache-dir --upgrade pip
+# Set working directory
+WORKDIR /app
 
-FROM python:3.12-slim-bullseye
-WORKDIR /sherlock
+# Clone Sherlock manually
+RUN git clone https://github.com/sherlock-project/sherlock.git
 
-ARG VCS_REF= # CHANGE ME ON UPDATE
-ARG VCS_URL="https://github.com/sherlock-project/sherlock"
-ARG VERSION_TAG= # CHANGE ME ON UPDATE
+# Install Sherlock requirements
+WORKDIR /app/sherlock
+RUN pip install -r requirements.txt
 
-ENV SHERLOCK_ENV=docker
+# Move back to app folder
+WORKDIR /app
 
-LABEL org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url=$VCS_URL \
-      org.label-schema.name="Sherlock" \
-      org.label-schema.version=$VERSION_TAG \
-      website="https://sherlockproject.xyz"
+# Copy your API files (main.py, requirements.txt for FastAPI)
+COPY . .
 
-RUN pip3 install --no-cache-dir sherlock-project==$VERSION_TAG
+# Install FastAPI and other API dependencies
+RUN pip install -r requirements.txt
 
-WORKDIR /sherlock
+# Expose port (change if needed)
+EXPOSE 10000
 
-ENTRYPOINT ["sherlock"]
+# Start your FastAPI server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
